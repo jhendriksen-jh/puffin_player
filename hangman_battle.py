@@ -3,6 +3,7 @@ import asyncio
 import string
 import random
 import os
+import time
 
 from dotenv import load_dotenv
 
@@ -21,7 +22,6 @@ bots_turn = False
 hangman = None
 MSG = None
 
-
 async def edit_previous_message(new_content: str):
     if MSG:
         await MSG.edit(content=new_content)
@@ -29,7 +29,38 @@ async def edit_previous_message(new_content: str):
 
 class PlayHangman:
     def __init__(self):
-        self.letters = string.ascii_lowercase
+        letter_dist = {
+            "e": 24,
+            "t": 18,
+            "a": 16,
+            "o": 15,
+            "i": 14,
+            "n": 14,
+            "s": 12,
+            "r": 12,
+            "h": 12,
+            "d": 9,
+            "l": 8,
+            "u": 6,
+            "c": 6,
+            "m": 5,
+            "f": 5,
+            "y": 4,
+            "w": 4,
+            "g": 4,
+            "p": 4,
+            "b": 3,
+            "v": 2,
+            "k": 2,
+            "x": 1,
+            "q": 1,
+            "j": 1,
+            "z": 1,
+        }
+
+        self.letters = ""
+        for letter, freq in letter_dist.items():
+            self.letters += letter*freq
 
     async def start_game(self, channel):
         ini_string = r"%hangman"
@@ -38,6 +69,7 @@ class PlayHangman:
     async def make_guess(self, channel):
         guess = random.choice(self.letters)
         self.letters = self.letters.replace(guess, "")
+        time.sleep(1.5)
         await channel.send(guess)
 
     async def play_hangman(self, channel):
@@ -103,4 +135,5 @@ async def on_message_edit(before, after):
         task = asyncio.create_task(hangman.play_hangman(after.channel))
         await task
 
-client.run(TOKEN)
+if __name__ == "__main__":
+    client.run(TOKEN)

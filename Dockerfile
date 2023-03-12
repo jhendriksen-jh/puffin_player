@@ -6,7 +6,7 @@ RUN pip install --upgrade pip wheel
 RUN pip install -r requirements.txt
 
 COPY ./.env ./
-COPY ./hangman_battle.py
+COPY ./hangman_battle.py ./
 
 ENV PYTHONPATH=.
 
