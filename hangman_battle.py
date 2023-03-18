@@ -71,6 +71,7 @@ class PlayHangman:
 
         words_path = "./data/en_225k.csv"
         word_df = pd.read_csv(words_path)
+        word_df = word_df[:]
         word_df = word_df[word_df.length == word_length]
         self.word_df = word_df
         self.selection_string = ""
@@ -96,7 +97,7 @@ class PlayHangman:
         poss_words = self.word_df
         word_count = 0
         if prev_guess:
-            print("smart")
+            print(f"smart - {prev_guess} - {prev_word}")
             if good_letters:
                 for p_char in good_letters:
                     poss_words = poss_words[[p_char in i for i in poss_words.word]]
@@ -104,6 +105,7 @@ class PlayHangman:
                 for p_char in bad_letters:
                     poss_words = poss_words[[p_char not in i for i in poss_words.word]]
 
+            print(f"num potential words: {len(poss_words)}")
             all_guess = set()
             all_guess.update(good_letters)
             all_guess.update(bad_letters)
@@ -112,10 +114,21 @@ class PlayHangman:
             list_words = poss_words.word.to_list()
 
             for word in list_words:
+                matching_letters = []
                 test_word = word
-                for letter in all_guess:
-                    test_word = test_word.replace(letter, "")
-                if len(test_word) == num_missing:
+                for idx, letter in enumerate(prev_word):
+                    if letter != "_" and letter == test_word[idx]:
+                        matching_letters.append(True)
+                    elif letter == "_":
+                        matching_letters.append(True)
+                    elif set(prev_guess) == set("_"):
+                        matching_letters.append(True)
+                    else:
+                        matching_letters.append(False)
+                if all(matching_letters):
+                    for letter in all_guess:
+                        test_word = test_word.replace(letter, "")
+
                     word_count += 1
                     poss_chars += test_word
 
@@ -133,7 +146,7 @@ class PlayHangman:
         self.selection_string = self.selection_string.replace(guess, "")
         time.sleep(1)
         prev_guess = guess
-        print(f"good letters: {good_letters}; bad_letters: {bad_letters}; num potential words: {word_count}")
+        print(f"good letters: {good_letters}; bad_letters: {bad_letters}; num filtered words: {word_count}")
         await channel.send(guess)
 
     async def play_hangman(self, channel):
@@ -215,13 +228,10 @@ async def on_message_edit(before, after):
         curr_word = after.content.split("```")
         curr_word = [i for i in curr_word if 'Current word' in i]
         curr_word = curr_word[0].split("\n")[0].split(":")[-1]
-        num_missing = len(curr_word)
-        curr_word = curr_word.replace("_","")
-        num_missing = num_missing - len(curr_word)
         curr_word = curr_word.replace(" ","")
         
         if curr_word != prev_word:
-            good_letters = set(curr_word)
+            good_letters = set(curr_word.replace("_",""))
             if prev_guess:
                 good_letters.add(prev_guess)
             prev_word = curr_word
